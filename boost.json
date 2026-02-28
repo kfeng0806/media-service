@@ -1,0 +1,9 @@
+{
+    "agents": [
+        "cursor"
+    ],
+    "guidelines": true,
+    "skills": [
+        "pest-testing"
+    ]
+}
