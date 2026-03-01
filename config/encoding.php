@@ -4,7 +4,7 @@ return [
 
     'image' => [
 
-        'cover' => [
+        'post_cover' => [
 
             'width' => 400,
 
@@ -30,6 +30,12 @@ return [
 
             ],
 
+            'animation' => [
+
+                'max_width' => 1920,
+
+            ],
+
         ],
 
         'hosting' => [
@@ -38,8 +44,8 @@ return [
 
             'max_height' => 6400,
 
-        ]
+        ],
 
-    ]
+    ],
 
 ];

@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'driver' => \Intervention\Image\Drivers\Vips\Driver::class,
+    'driver' => env('IMAGE_DRIVER', \Intervention\Image\Drivers\Vips\Driver::class),
 
     /*
     |--------------------------------------------------------------------------
@@ -42,5 +42,5 @@ return [
         'decodeAnimation' => true,
         'blendingColor' => 'ffffff',
         'strip' => true,
-    ]
+    ],
 ];
