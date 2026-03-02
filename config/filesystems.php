@@ -33,7 +33,13 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'data' => [
+            'driver' => 'local',
+            'root' => storage_path('app/data'),
             'throw' => false,
             'report' => false,
         ],

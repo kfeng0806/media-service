@@ -1,0 +1,10 @@
+#!/command/with-contenv bash
+
+source /container/base/functions/container/init
+SERVICE_NAME="horizon"
+
+check_container_initialized
+liftoff
+
+print_start "Starting Laravel Horizon"
+exec s6-setuidgid nginx php /app/artisan horizon

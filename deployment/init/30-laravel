@@ -1,0 +1,15 @@
+#!/command/with-contenv bash
+
+source /container/base/functions/container/init
+prepare_service single
+SERVICE_NAME="media_service"
+
+cd /app
+
+print_info "Running Laravel optimizations"
+#php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan event:cache
+
+print_info "Registering Laravel scheduler crontab"
+echo '* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1' | crontab -
+
+liftoff
