@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'driver' => env('IMAGE_DRIVER', \Intervention\Image\Drivers\Vips\Driver::class),
+    'driver' => env('IMAGE_DRIVER', \Intervention\Image\Drivers\Gd\Driver::class),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,7 +39,7 @@ return [
 
     'options' => [
         'autoOrientation' => false,
-        'decodeAnimation' => true,
+        'decodeAnimation' => false,
         'blendingColor' => 'ffffff',
         'strip' => true,
     ],
