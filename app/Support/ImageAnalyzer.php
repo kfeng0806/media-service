@@ -56,7 +56,7 @@ final class ImageAnalyzer
      */
     public static function isAnimatedGif(UploadedFile $file): bool
     {
-        $handle = fopen($file->getRealPath(), 'rb');
+        $handle = fopen($file->path(), 'rb');
 
         if ($handle === false) {
             return false;

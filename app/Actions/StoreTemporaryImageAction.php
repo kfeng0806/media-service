@@ -6,6 +6,7 @@ use App\Enums\MediaType;
 use App\Models\TemporaryMedia;
 use App\Models\User;
 use App\Support\ImageAnalyzer;
+use FFMpeg\FFProbe;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -34,7 +35,7 @@ final class StoreTemporaryImageAction
 
     private function handleStaticImage(UploadedFile $file, User $user, string $originalName): TemporaryMedia
     {
-        $image = Image::read($file->getRealPath());
+        $image = Image::read($file->path());
         $this->scaleIfNeeded($image);
 
         $ext = ImageAnalyzer::determineOutputFormat($image);
@@ -58,9 +59,14 @@ final class StoreTemporaryImageAction
 
     private function handleAnimatedGif(UploadedFile $file, User $user, string $originalName): TemporaryMedia
     {
-        $image = Image::read($file->getRealPath());
-        $width = min($image->width(), config('encoding.image.media.animation.max_width'));
-        $height = (int) round($image->height() * ($width / $image->width()));
+        $ffprobe = FFProbe::create();
+        $dimensions = $ffprobe->streams($file->path())->videos()->first()->getDimensions();
+
+        $sourceWidth = $dimensions->getWidth();
+        $sourceHeight = $dimensions->getHeight();
+
+        $width = min($sourceWidth, config('encoding.image.media.animation.max_width'));
+        $height = (int) round($sourceHeight * ($width / $sourceWidth));
 
         $format = (new X264)->setAdditionalParameters([
             '-movflags', 'faststart',
@@ -88,14 +94,14 @@ final class StoreTemporaryImageAction
 
     private function processVideoFile(UploadedFile $file, X264 $format, User $user, string $originalName): TemporaryMedia
     {
-        $outputPath = sys_get_temp_dir().'/'.uniqid('media_').'.mp4';
-
-        FFMpeg::open($file->getRealPath())
+        $outputName = uniqid('media_').'.mp4';
+        FFMpeg::open($file)
             ->export()
             ->inFormat($format)
-            ->save($outputPath);
+            ->save($outputName);
 
-        $ffprobe = \FFMpeg\FFProbe::create();
+        $outputPath = sys_get_temp_dir().'/'.$outputName;
+        $ffprobe = FFProbe::create();
         $dimensions = $ffprobe->streams($outputPath)->videos()->first()->getDimensions();
         $fileContent = File::get($outputPath);
         File::delete($outputPath);
