@@ -12,6 +12,8 @@ return [
 
             'audio' => 'tmp/upload/audios',
 
+            'attachment' => 'tmp/upload/attachments',
+
         ],
 
         'encoding' => 'tmp/encoding',
@@ -25,6 +27,9 @@ return [
         'video' => 'media/videos',
 
         'audio' => 'media/audios',
+
+        'attachment' => 'media/attachments',
+
     ],
 
     'user' => [

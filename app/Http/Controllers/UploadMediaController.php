@@ -7,13 +7,13 @@ use App\Http\Requests\UploadImageRequest;
 use App\Http\Resources\TemporaryMediaResource;
 use Illuminate\Http\JsonResponse;
 
-class MediaUploadController extends Controller
+class UploadMediaController extends Controller
 {
     public function image(
         UploadImageRequest $request,
-        StoreTemporaryImageAction $action,
+        StoreTemporaryImageAction $storeTemporaryImageAction,
     ): JsonResponse {
-        $temporaryMedia = $action->execute(
+        $temporaryMedia = $storeTemporaryImageAction->execute(
             $request->file('file'),
             $request->user(),
         );

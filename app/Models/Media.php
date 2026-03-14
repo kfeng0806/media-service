@@ -13,11 +13,15 @@ class Media extends Model
     use HasFactory;
 
     protected $fillable = [
+        'mediable_type',
+        'mediable_id',
+        'user_id',
         'name',
         'path',
         'type',
         'extension',
         'file_size',
+        'download_count',
         'metadata',
         'sort_order',
     ];
