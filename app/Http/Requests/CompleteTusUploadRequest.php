@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UploadImageRequest extends FormRequest
+class CompleteTusUploadRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,11 +16,9 @@ class UploadImageRequest extends FormRequest
      */
     public function rules(): array
     {
-        $maxKb = (int) (config('upload.image.max_size') / 1024);
-        $extensions = implode(',', config('upload.image.allowed_extensions', []));
-
         return [
-            'file' => ['required', 'file', "max:{$maxKb}", "mimes:{$extensions}"],
+            'session_id' => ['required', 'integer', 'exists:upload_sessions,id'],
+            'upload_id' => ['required', 'string', 'max:255'],
         ];
     }
 }

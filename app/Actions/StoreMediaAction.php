@@ -33,20 +33,23 @@ final readonly class StoreMediaAction
             return;
         }
 
-        $this->storeByType($media, $temporaryMedia);
+        if (! $this->storeByType($media, $temporaryMedia)) {
+            return;
+        }
 
         $temporaryMedia->delete();
     }
 
-    private function storeByType(Media $media, TemporaryMedia $temporaryMedia): void
+    private function storeByType(Media $media, TemporaryMedia $temporaryMedia): bool
     {
-        match ($media->type) {
+        return match ($media->type) {
             MediaType::Image => $this->storeImage($media, $temporaryMedia),
-            default => null,
+            MediaType::Attachment => $this->storeAttachment($media, $temporaryMedia),
+            default => false,
         };
     }
 
-    private function storeImage(Media $media, TemporaryMedia $temporaryMedia): void
+    private function storeImage(Media $media, TemporaryMedia $temporaryMedia): bool
     {
         $extension = $temporaryMedia->metadata['extension'] ?? $media->extension;
         $temporaryPath = config('paths.temporary.upload.image').'/'.$temporaryMedia->id.'.'.$extension;
@@ -60,9 +63,33 @@ final readonly class StoreMediaAction
         );
 
         if (! $wasMoved) {
-            return;
+            return false;
         }
 
         $media->update(['path' => $finalRelativePath]);
+
+        return true;
+    }
+
+    private function storeAttachment(Media $media, TemporaryMedia $temporaryMedia): bool
+    {
+        $extension = $temporaryMedia->metadata['extension'] ?? $media->extension;
+        $temporaryPath = config('paths.temporary.upload.attachment').'/'.$temporaryMedia->id.'.'.$extension;
+        $finalRelativePath = MediaPathGenerator::attachmentPath($media->id, $media->extension);
+
+        $wasMoved = $this->fileMover->moveFile(
+            'local',
+            $temporaryPath,
+            'data',
+            $finalRelativePath,
+        );
+
+        if (! $wasMoved) {
+            return false;
+        }
+
+        $media->update(['path' => $finalRelativePath]);
+
+        return true;
     }
 }

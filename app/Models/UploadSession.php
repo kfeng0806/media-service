@@ -3,18 +3,22 @@
 namespace App\Models;
 
 use App\Enums\MediaType;
+use App\Enums\UploadSessionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class TemporaryMedia extends Model
+class UploadSession extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
+        'temporary_media_id',
         'type',
+        'status',
+        'client_upload_key',
+        'tus_upload_id',
         'metadata',
     ];
 
@@ -22,6 +26,7 @@ class TemporaryMedia extends Model
     {
         return [
             'type' => MediaType::class,
+            'status' => UploadSessionStatus::class,
             'metadata' => 'json',
         ];
     }
@@ -31,8 +36,8 @@ class TemporaryMedia extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function uploadSession(): HasOne
+    public function temporaryMedia(): BelongsTo
     {
-        return $this->hasOne(UploadSession::class);
+        return $this->belongsTo(TemporaryMedia::class);
     }
 }

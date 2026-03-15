@@ -130,6 +130,81 @@ it('handles mp4 extension for image type media', function () {
     expect($media->path)->toBe($expectedPath);
 });
 
+it('moves attachment temp file to data disk with correct path', function () {
+    $temp = TemporaryMedia::create([
+        'user_id' => $this->user->id,
+        'type' => MediaType::Attachment,
+        'metadata' => [
+            'extension' => 'zip',
+            'name' => 'archive',
+            'file_size' => 4096,
+            'mime_type' => 'application/zip',
+        ],
+    ]);
+
+    $tmpPath = config('paths.temporary.upload.attachment').'/'.$temp->id.'.zip';
+    Storage::disk('local')->put($tmpPath, 'fake-attachment-content');
+
+    $media = Media::create([
+        'mediable_type' => Post::class,
+        'mediable_id' => 1,
+        'user_id' => $this->user->id,
+        'name' => 'archive',
+        'path' => '',
+        'type' => MediaType::Attachment,
+        'extension' => 'zip',
+        'file_size' => 4096,
+        'metadata' => ['mime_type' => 'application/zip'],
+    ]);
+
+    $this->action->execute([
+        ['media_id' => $media->id, 'temporary_media_id' => $temp->id],
+    ]);
+
+    $expectedPath = MediaPathGenerator::attachmentPath($media->id, 'zip');
+    Storage::disk('data')->assertExists($expectedPath);
+    Storage::disk('local')->assertMissing($tmpPath);
+
+    $media->refresh();
+    expect($media->path)->toBe($expectedPath);
+
+    $this->assertDatabaseMissing('temporary_media', ['id' => $temp->id]);
+});
+
+it('keeps temporary media when the source file is missing', function () {
+    $temp = TemporaryMedia::create([
+        'user_id' => $this->user->id,
+        'type' => MediaType::Attachment,
+        'metadata' => [
+            'extension' => 'zip',
+            'name' => 'archive',
+            'file_size' => 4096,
+            'mime_type' => 'application/zip',
+        ],
+    ]);
+
+    $media = Media::create([
+        'mediable_type' => Post::class,
+        'mediable_id' => 1,
+        'user_id' => $this->user->id,
+        'name' => 'archive',
+        'path' => '',
+        'type' => MediaType::Attachment,
+        'extension' => 'zip',
+        'file_size' => 4096,
+        'metadata' => ['mime_type' => 'application/zip'],
+    ]);
+
+    $this->action->execute([
+        ['media_id' => $media->id, 'temporary_media_id' => $temp->id],
+    ]);
+
+    $media->refresh();
+    expect($media->path)->toBe('');
+
+    $this->assertDatabaseHas('temporary_media', ['id' => $temp->id]);
+});
+
 it('skips when temporary media not found', function () {
     $media = Media::create([
         'mediable_type' => Post::class,

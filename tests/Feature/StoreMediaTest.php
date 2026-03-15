@@ -141,3 +141,51 @@ it('stores multiple image media in a single request', function () {
         $this->assertDatabaseMissing('temporary_media', ['id' => $record['temporary_media_id']]);
     }
 });
+
+it('stores attachment media by moving temp file to data disk and updates path', function () {
+    $temporaryMedia = TemporaryMedia::create([
+        'user_id' => $this->user->id,
+        'type' => MediaType::Attachment,
+        'metadata' => [
+            'extension' => 'zip',
+            'name' => 'archive',
+            'file_size' => 4096,
+            'mime_type' => 'application/zip',
+        ],
+    ]);
+
+    $tmpPath = config('paths.temporary.upload.attachment').'/'.$temporaryMedia->id.'.zip';
+    Storage::disk('local')->put($tmpPath, 'fake-attachment-content');
+
+    $media = Media::create([
+        'mediable_type' => Post::class,
+        'mediable_id' => 1,
+        'user_id' => $this->user->id,
+        'name' => 'archive',
+        'path' => '',
+        'type' => MediaType::Attachment,
+        'extension' => 'zip',
+        'file_size' => 4096,
+        'metadata' => ['mime_type' => 'application/zip'],
+    ]);
+
+    $response = $this->postJson('/api/internal/store-media', [
+        'media' => [
+            [
+                'media_id' => $media->id,
+                'temporary_media_id' => $temporaryMedia->id,
+            ],
+        ],
+    ], $this->internalHeaders);
+
+    $response->assertSuccessful();
+
+    $expectedPath = MediaPathGenerator::attachmentPath($media->id, 'zip');
+    Storage::disk('data')->assertExists($expectedPath);
+    Storage::disk('local')->assertMissing($tmpPath);
+
+    $media->refresh();
+    expect($media->path)->toBe($expectedPath);
+
+    $this->assertDatabaseMissing('temporary_media', ['id' => $temporaryMedia->id]);
+});
