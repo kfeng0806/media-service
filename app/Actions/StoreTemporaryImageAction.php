@@ -19,45 +19,45 @@ final class StoreTemporaryImageAction
 {
     public function execute(UploadedFile $file, User $user): TemporaryMedia
     {
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $ext = strtolower($file->getClientOriginalExtension());
+        $fileName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->getClientOriginalExtension());
 
-        if ($ext === 'gif' && ImageAnalyzer::isAnimatedGif($file)) {
-            return $this->handleAnimatedGif($file, $user, $originalName);
+        if ($extension === 'gif' && ImageAnalyzer::isAnimatedGif($file)) {
+            return $this->handleAnimatedGif($file, $user, $fileName);
         }
 
-        if ($ext === 'mp4') {
-            return $this->handleMp4($file, $user, $originalName);
+        if ($extension === 'mp4') {
+            return $this->handleMp4($file, $user, $fileName);
         }
 
-        return $this->handleStaticImage($file, $user, $originalName);
+        return $this->handleStaticImage($file, $user, $fileName);
     }
 
-    private function handleStaticImage(UploadedFile $file, User $user, string $originalName): TemporaryMedia
+    private function handleStaticImage(UploadedFile $file, User $user, string $fileName): TemporaryMedia
     {
         $image = Image::read($file->path());
         $this->scaleIfNeeded($image);
 
-        $ext = ImageAnalyzer::determineOutputFormat($image);
-        $encoded = (string) match ($ext) {
+        $extension = ImageAnalyzer::determineOutputFormat($image);
+        $encoded = (string) match ($extension) {
             'png' => $image->toPng(),
             default => $image->toJpeg(),
         };
 
         $temporaryMedia = $this->createTemporaryMedia($user, [
-            'extension' => $ext,
-            'name' => $originalName,
+            'extension' => $extension,
+            'name' => $fileName,
             'width' => $image->width(),
             'height' => $image->height(),
             'file_size' => strlen($encoded),
         ]);
 
-        $this->storeFile($temporaryMedia->id, $ext, $encoded);
+        $this->storeFile($temporaryMedia->id, $extension, $encoded);
 
         return $temporaryMedia;
     }
 
-    private function handleAnimatedGif(UploadedFile $file, User $user, string $originalName): TemporaryMedia
+    private function handleAnimatedGif(UploadedFile $file, User $user, string $fileName): TemporaryMedia
     {
         $ffprobe = FFProbe::create();
         $dimensions = $ffprobe->streams($file->path())->videos()->first()->getDimensions();
@@ -76,10 +76,10 @@ final class StoreTemporaryImageAction
             '-an',
         ]);
 
-        return $this->processVideoFile($file, $format, $user, $originalName);
+        return $this->processVideoFile($file, $format, $user, $fileName);
     }
 
-    private function handleMp4(UploadedFile $file, User $user, string $originalName): TemporaryMedia
+    private function handleMp4(UploadedFile $file, User $user, string $fileName): TemporaryMedia
     {
         $format = (new X264)->setAdditionalParameters([
             '-movflags', '+faststart',
@@ -89,10 +89,10 @@ final class StoreTemporaryImageAction
             '-an',
         ]);
 
-        return $this->processVideoFile($file, $format, $user, $originalName);
+        return $this->processVideoFile($file, $format, $user, $fileName);
     }
 
-    private function processVideoFile(UploadedFile $file, X264 $format, User $user, string $originalName): TemporaryMedia
+    private function processVideoFile(UploadedFile $file, X264 $format, User $user, string $fileName): TemporaryMedia
     {
         $outputName = uniqid('media_').'.mp4';
         FFMpeg::open($file)
@@ -108,7 +108,7 @@ final class StoreTemporaryImageAction
 
         $temporaryMedia = $this->createTemporaryMedia($user, [
             'extension' => 'mp4',
-            'name' => $originalName,
+            'name' => $fileName,
             'width' => $dimensions->getWidth(),
             'height' => $dimensions->getHeight(),
             'file_size' => strlen($fileContent),

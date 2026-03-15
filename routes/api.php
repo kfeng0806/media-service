@@ -25,6 +25,7 @@ Route::prefix('internal')
     ->group(function () {
 
         Route::post('delete-media', [InternalMediaController::class, 'delete']);
+
         Route::post('store-media', [InternalMediaController::class, 'store']);
 
     });
