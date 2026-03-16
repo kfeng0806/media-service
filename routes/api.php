@@ -17,6 +17,8 @@ Route::prefix('upload')
 
             Route::post('init', [UploadMediaController::class, 'init']);
 
+            Route::get('sessions/{uploadSession}', [UploadMediaController::class, 'show']);
+
             Route::post('image', [UploadMediaController::class, 'image']);
 
         });
