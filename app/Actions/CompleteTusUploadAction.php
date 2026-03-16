@@ -65,7 +65,10 @@ final readonly class CompleteTusUploadAction
             $targetPath,
         );
 
-        if (! $wasMoved) {
+        if ($wasMoved) {
+            // Clear tus metadata file
+            Storage::disk('local')->delete($this->sourcePath("{$uploadSession->tus_upload_id}.json"));
+        } else {
             $temporaryMedia->delete();
 
             throw ValidationException::withMessages([
