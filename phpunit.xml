@@ -33,5 +33,6 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="IMAGE_DRIVER" value="Intervention\Image\Drivers\Imagick\Driver"/>
         <env name="INTERNAL_API_KEY" value="test-internal-key"/>
+        <env name="HASHIDS_SALT" value="test-salt"/>
     </php>
 </phpunit>
