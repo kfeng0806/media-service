@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable([
+    'is_completed',
+    'file_path',
+    'file_size',
+])]
 class PostArchive extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'is_completed',
-        'file_path',
-        'file_size',
-    ];
 
     protected function casts(): array
     {

@@ -3,20 +3,20 @@
 namespace App\Models;
 
 use App\Enums\MediaType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+#[Fillable([
+    'user_id',
+    'type',
+    'metadata',
+])]
 class TemporaryMedia extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'type',
-        'metadata',
-    ];
 
     protected function casts(): array
     {
