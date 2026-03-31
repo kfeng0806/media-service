@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 12.54.1.
+ * Generated for Laravel 12.56.0.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -14962,6 +14962,18 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
+         * Determine if the current request is asking for Markdown.
+         *
+         * @return bool
+         * @static
+         */
+        public static function wantsMarkdown()
+        {
+            /** @var \Illuminate\Http\Request $instance */
+            return $instance->wantsMarkdown();
+        }
+
+        /**
          * Determines whether the current requests accepts a given content type.
          *
          * @param string|array $contentTypes
@@ -15009,6 +15021,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Http\Request $instance */
             return $instance->acceptsJson();
+        }
+
+        /**
+         * Determines whether a request accepts Markdown.
+         *
+         * @return bool
+         * @static
+         */
+        public static function acceptsMarkdown()
+        {
+            /** @var \Illuminate\Http\Request $instance */
+            return $instance->acceptsMarkdown();
         }
 
         /**
@@ -17141,6 +17165,19 @@ namespace Illuminate\Support\Facades {
         public static function flushMacros()
         {
             \Illuminate\Routing\ResponseFactory::flushMacros();
+        }
+
+        /**
+         * @see \Intervention\Image\Laravel\ServiceProvider::boot()
+         * @param \Intervention\Image\Interfaces\ImageInterface $image
+         * @param \Intervention\Image\Format|\Intervention\Image\MediaType|\Intervention\Image\FileExtension|string|null $format
+         * @param mixed|null $options
+         * @return \Illuminate\Http\Response
+         * @static
+         */
+        public static function image($image, $format = null, ...$options)
+        {
+            return \Illuminate\Routing\ResponseFactory::image($image, $format, ...$options);
         }
 
             }
@@ -23608,7 +23645,7 @@ namespace Vinkla\Hashids\Facades {
      * @method static string encodeHex(string $str)
      * @method static string decodeHex(string $hash)
      */
-    class Hashids extends \GrahamCampbell\Manager\AbstractManager {
+    class Hashids {
         /**
          * @static
          */
@@ -23850,6 +23887,23 @@ namespace Illuminate\Routing {
         public static function roleOrPermission($rolesOrPermissions = [])
         {
             return \Illuminate\Routing\Route::roleOrPermission($rolesOrPermissions);
+        }
+
+            }
+    /**
+     */
+    class ResponseFactory {
+        /**
+         * @see \Intervention\Image\Laravel\ServiceProvider::boot()
+         * @param \Intervention\Image\Interfaces\ImageInterface $image
+         * @param \Intervention\Image\Format|\Intervention\Image\MediaType|\Intervention\Image\FileExtension|string|null $format
+         * @param mixed|null $options
+         * @return \Illuminate\Http\Response
+         * @static
+         */
+        public static function image($image, $format = null, ...$options)
+        {
+            return \Illuminate\Routing\ResponseFactory::image($image, $format, ...$options);
         }
 
             }
@@ -27739,6 +27793,20 @@ namespace  {
         {
             /** @var \Illuminate\Database\Query\Builder $instance */
             return $instance->inRandomOrder($seed);
+        }
+
+        /**
+         * Add an "order by" clause to order results by a given sequence of values.
+         *
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \Illuminate\Contracts\Support\Arrayable|array $values
+         * @return \Illuminate\Database\Eloquent\Builder<static>
+         * @static
+         */
+        public static function inOrderOf($column, $values)
+        {
+            /** @var \Illuminate\Database\Query\Builder $instance */
+            return $instance->inOrderOf($column, $values);
         }
 
         /**
