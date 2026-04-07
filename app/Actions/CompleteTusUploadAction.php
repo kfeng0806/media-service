@@ -4,11 +4,13 @@ namespace App\Actions;
 
 use App\Enums\MediaType;
 use App\Enums\UploadSessionStatus;
+use App\Jobs\GenerateVideoThumbnailsJob;
 use App\Jobs\ProcessTemporaryAudioUploadJob;
 use App\Jobs\ProcessTemporaryVideoUploadJob;
 use App\Models\TemporaryMedia;
 use App\Models\UploadSession;
 use App\Support\MediaFileMover;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -89,9 +91,11 @@ final readonly class CompleteTusUploadAction
         ]);
 
         match ($uploadSession->type) {
-            MediaType::Video => ProcessTemporaryVideoUploadJob::dispatch($uploadSession->id),
+            MediaType::Video => Bus::chain([
+                new ProcessTemporaryVideoUploadJob($uploadSession->id),
+                new GenerateVideoThumbnailsJob($uploadSession->id),
+            ])->onQueue('encoding')->dispatch(),
             MediaType::Audio => ProcessTemporaryAudioUploadJob::dispatch($uploadSession->id),
-            default => null,
         };
     }
 

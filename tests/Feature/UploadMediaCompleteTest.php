@@ -2,11 +2,13 @@
 
 use App\Enums\MediaType;
 use App\Enums\UploadSessionStatus;
+use App\Jobs\GenerateVideoThumbnailsJob;
 use App\Jobs\ProcessTemporaryAudioUploadJob;
 use App\Jobs\ProcessTemporaryVideoUploadJob;
 use App\Models\TemporaryMedia;
 use App\Models\UploadSession;
 use App\Models\User;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -151,8 +153,8 @@ it('deletes the upload session when the linked temporary media is deleted', func
     $this->assertDatabaseMissing('upload_sessions', ['id' => $uploadSession->id]);
 });
 
-it('queues the video processing job after upload completion', function () {
-    Queue::fake();
+it('queues the video processing job chain after upload completion', function () {
+    Bus::fake();
 
     $uploadSession = UploadSession::create([
         'user_id' => $this->user->id,
@@ -174,9 +176,14 @@ it('queues the video processing job after upload completion', function () {
         'upload_id' => 'video-upload-1',
     ], $this->internalHeaders)->assertNoContent();
 
-    Queue::assertPushed(ProcessTemporaryVideoUploadJob::class, function (ProcessTemporaryVideoUploadJob $job) use ($uploadSession) {
-        return $job->uploadSessionId === $uploadSession->id;
-    });
+    Bus::assertChained([
+        function (ProcessTemporaryVideoUploadJob $job) use ($uploadSession) {
+            return $job->uploadSessionId === $uploadSession->id;
+        },
+        function (GenerateVideoThumbnailsJob $job) use ($uploadSession) {
+            return $job->uploadSessionId === $uploadSession->id;
+        },
+    ]);
 
     $uploadSession->refresh();
     expect($uploadSession->status)->toBe(UploadSessionStatus::Processing)
@@ -218,7 +225,7 @@ it('queues the audio processing job after upload completion', function () {
 });
 
 it('does not queue duplicate processing jobs for sessions already being processed', function () {
-    Queue::fake();
+    Bus::fake();
 
     $uploadSession = UploadSession::create([
         'user_id' => $this->user->id,
@@ -238,7 +245,7 @@ it('does not queue duplicate processing jobs for sessions already being processe
         'upload_id' => 'video-upload-1',
     ], $this->internalHeaders)->assertNoContent();
 
-    Queue::assertNothingPushed();
+    Bus::assertNothingDispatched();
 });
 
 it('returns a validation error when the uploaded file is missing', function () {

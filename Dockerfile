@@ -81,5 +81,5 @@ RUN chmod +x /container/run/available/horizon/run
 COPY deployment/init/30-laravel /container/init/init.d/30-laravel
 RUN chmod +x /container/init/init.d/30-laravel
 
-COPY deployment/shaka-packager/packager-linux-x64-3-4-2 /usr/local/bin/shaka-packager
+COPY deployment/shaka-packager/packager-linux-x64-3-7-1 /usr/local/bin/shaka-packager
 RUN chmod +x /usr/local/bin/shaka-packager

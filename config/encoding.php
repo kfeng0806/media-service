@@ -48,4 +48,16 @@ return [
 
     ],
 
+    'video' => [
+
+        'cover_position_percent' => 50,
+
+        'shaka_binary' => env('SHAKA_PACKAGER_BINARY', 'shaka-packager'),
+
+        'segment_duration' => 6,
+
+        'use_nvenc' => env('VIDEO_USE_NVENC', false),
+
+    ],
+
 ];
