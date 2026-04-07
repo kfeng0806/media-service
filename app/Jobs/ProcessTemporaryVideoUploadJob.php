@@ -200,17 +200,20 @@ class ProcessTemporaryVideoUploadJob implements ShouldQueue
 
         $command = [
             $binary,
-            "in={$masterAbsolute},stream=video,output={$segmentsDir}/h264_default.mp4,playlist_name=h264_default.m3u8",
+            "in={$masterAbsolute},stream=video,init_segment={$segmentsDir}/h264_default/init.mp4,segment_template={$segmentsDir}/h264_default/\$Number\$.m4s,playlist_name=h264_default.m3u8",
             '--segment_duration', (string) $segmentDuration,
             '--mpd_output', "{$segmentsDir}/vod.mpd",
             '--hls_master_playlist_output', "{$segmentsDir}/vod.m3u8",
         ];
 
         if ($this->hasAudioStream($masterAbsolute)) {
+            Storage::disk('local')->makeDirectory("{$encodingDir}/segments/audio");
             array_splice($command, 2, 0, [
-                "in={$masterAbsolute},stream=audio,output={$segmentsDir}/audio.mp4,playlist_name=audio.m3u8",
+                "in={$masterAbsolute},stream=audio,init_segment={$segmentsDir}/audio/init.mp4,segment_template={$segmentsDir}/audio/\$Number\$.m4s,playlist_name=audio.m3u8",
             ]);
         }
+
+        Storage::disk('local')->makeDirectory("{$encodingDir}/segments/h264_default");
 
         $process = new Process($command);
         $process->setTimeout(1800);
