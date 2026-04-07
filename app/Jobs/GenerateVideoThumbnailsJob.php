@@ -43,6 +43,11 @@ class GenerateVideoThumbnailsJob implements ShouldQueue
             })
             ->save("{$thumbnailDir}/tile_%05d.jpg");
 
+        $vttPath = "{$thumbnailDir}/thumbnails.vtt";
+        $vtt = Storage::disk('local')->get($vttPath);
+        $vtt = str_replace("{$thumbnailDir}/", '', $vtt);
+        Storage::disk('local')->put($vttPath, $vtt);
+
         $temporaryMedia->update([
             'metadata' => array_merge($temporaryMedia->metadata ?? [], [
                 'has_thumbnails' => true,

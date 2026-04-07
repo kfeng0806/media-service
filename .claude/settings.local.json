@@ -9,7 +9,8 @@
       "Bash(vendor/bin/pint --dirty --format agent 2>&1)",
       "mcp__laravel-boost__search-docs",
       "mcp__plugin_everything-claude-code_context7__resolve-library-id",
-      "mcp__plugin_everything-claude-code_context7__query-docs"
+      "mcp__plugin_everything-claude-code_context7__query-docs",
+      "Bash(git commit:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

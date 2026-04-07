@@ -189,3 +189,57 @@ it('stores attachment media by moving temp file to data disk and updates path', 
 
     $this->assertDatabaseMissing('temporary_media', ['id' => $temporaryMedia->id]);
 });
+
+it('stores video media by moving temp directory to data disk and updates path', function () {
+    $temporaryMedia = TemporaryMedia::create([
+        'user_id' => $this->user->id,
+        'type' => MediaType::Video,
+        'metadata' => [
+            'extension' => 'mp4',
+            'name' => 'clip',
+            'width' => 1920,
+            'height' => 1080,
+            'duration' => 60.0,
+            'file_size' => 10485760,
+        ],
+    ]);
+
+    $tmpDir = config('paths.temporary.upload.video').'/'.$temporaryMedia->id;
+    Storage::disk('local')->put("{$tmpDir}/master.mp4", 'fake-video');
+    Storage::disk('local')->put("{$tmpDir}/cover.jpg", 'fake-cover');
+    Storage::disk('local')->put("{$tmpDir}/segments/vod.m3u8", 'fake-manifest');
+
+    $media = Media::create([
+        'mediable_type' => Post::class,
+        'mediable_id' => 1,
+        'user_id' => $this->user->id,
+        'name' => 'clip',
+        'path' => '',
+        'type' => MediaType::Video,
+        'extension' => 'mp4',
+        'file_size' => 10485760,
+        'metadata' => ['width' => 1920, 'height' => 1080, 'duration' => 60.0],
+    ]);
+
+    $response = $this->postJson('/api/internal/store-media', [
+        'media' => [
+            [
+                'media_id' => $media->id,
+                'temporary_media_id' => $temporaryMedia->id,
+            ],
+        ],
+    ], $this->internalHeaders);
+
+    $response->assertSuccessful();
+
+    $expectedPath = MediaPathGenerator::videoDir($media->id);
+    Storage::disk('data')->assertExists("{$expectedPath}/master.mp4");
+    Storage::disk('data')->assertExists("{$expectedPath}/cover.jpg");
+    Storage::disk('data')->assertExists("{$expectedPath}/segments/vod.m3u8");
+    Storage::disk('local')->assertMissing($tmpDir);
+
+    $media->refresh();
+    expect($media->path)->toBe($expectedPath);
+
+    $this->assertDatabaseMissing('temporary_media', ['id' => $temporaryMedia->id]);
+});

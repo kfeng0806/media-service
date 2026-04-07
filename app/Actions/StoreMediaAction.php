@@ -44,6 +44,7 @@ final readonly class StoreMediaAction
     {
         return match ($media->type) {
             MediaType::Image => $this->storeImage($media, $temporaryMedia),
+            MediaType::Video => $this->storeVideo($media, $temporaryMedia),
             MediaType::Attachment => $this->storeAttachment($media, $temporaryMedia),
             default => false,
         };
@@ -56,6 +57,27 @@ final readonly class StoreMediaAction
         $finalRelativePath = MediaPathGenerator::imagePath($media->id, $media->extension);
 
         $wasMoved = $this->fileMover->moveFile(
+            'local',
+            $temporaryPath,
+            'data',
+            $finalRelativePath,
+        );
+
+        if (! $wasMoved) {
+            return false;
+        }
+
+        $media->update(['path' => $finalRelativePath]);
+
+        return true;
+    }
+
+    private function storeVideo(Media $media, TemporaryMedia $temporaryMedia): bool
+    {
+        $temporaryPath = config('paths.temporary.upload.video').'/'.$temporaryMedia->id;
+        $finalRelativePath = MediaPathGenerator::videoDir($media->id);
+
+        $wasMoved = $this->fileMover->moveDirectory(
             'local',
             $temporaryPath,
             'data',
