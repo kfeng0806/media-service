@@ -75,7 +75,6 @@ it('completes an attachment upload and creates temporary media', function () {
             'extension' => 'zip',
             'name' => 'archive',
             'file_size' => 4096,
-            'mime_type' => 'application/zip',
         ]);
 
     Storage::disk('local')->assertExists($targetPath);

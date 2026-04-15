@@ -49,7 +49,15 @@ final class MediaFileMover
             return false;
         }
 
-        File::moveDirectory($paths['source'], $paths['destination']);
+        if (File::moveDirectory($paths['source'], $paths['destination'])) {
+            return true;
+        }
+
+        if (! File::copyDirectory($paths['source'], $paths['destination'])) {
+            return false;
+        }
+
+        File::deleteDirectory($paths['source']);
 
         return true;
     }

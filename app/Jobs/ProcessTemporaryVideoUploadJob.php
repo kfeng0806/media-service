@@ -7,9 +7,9 @@ use App\Enums\UploadSessionStatus;
 use App\Models\TemporaryMedia;
 use App\Models\UploadSession;
 use App\Support\MediaFileMover;
+use App\Support\RawVideoFormat;
 use App\Support\UploadSessionCache;
 use FFMpeg\FFProbe;
-use FFMpeg\Format\Video\X264;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -82,6 +82,7 @@ class ProcessTemporaryVideoUploadJob implements ShouldQueue
             'sample_aspect_ratio' => $video->get('sample_aspect_ratio'),
             'audio_codec' => $audio?->get('codec_name'),
             'audio_profile' => $audio?->get('profile'),
+            'audio_channels' => (int) ($audio?->get('channels') ?? 0),
         ];
     }
 
@@ -126,13 +127,17 @@ class ProcessTemporaryVideoUploadJob implements ShouldQueue
 
         if ($probe['audio_codec'] === null) {
             $parameters[] = '-an';
-        } elseif ($probe['audio_codec'] === 'aac' && str_contains(strtolower($probe['audio_profile'] ?? ''), 'lc')) {
+        } elseif (
+            $probe['audio_codec'] === 'aac'
+            && str_contains(strtolower($probe['audio_profile'] ?? ''), 'lc')
+            && $probe['audio_channels'] === 2
+        ) {
             $parameters = [...$parameters, '-map', '0:a:0', '-c:a', 'copy'];
         } else {
-            $parameters = [...$parameters, '-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k'];
+            $parameters = [...$parameters, '-map', '0:a:0', '-c:a', 'aac', '-b:a', '128k', '-ac', '2'];
         }
 
-        $format = (new X264)->setAdditionalParameters($parameters);
+        $format = (new RawVideoFormat)->setAdditionalParameters($parameters);
 
         $format->on('progress', function ($video, $format, $percentage) {
             $this->reportProgress((int) round($percentage * 0.5));
@@ -177,13 +182,17 @@ class ProcessTemporaryVideoUploadJob implements ShouldQueue
         $needsScale = $probe['width'] > 1920 || $probe['height'] > 1080;
 
         if ($needsParFix && $needsScale) {
-            $filters[] = "scale='min(1920,iw*sar)':'min(1080,ih)':force_original_aspect_ratio=decrease";
+            $filters[] = "scale='min(1920,iw)':'min(1080,iw/dar)':force_original_aspect_ratio=decrease";
             $filters[] = 'setsar=1:1';
         } elseif ($needsParFix) {
-            $filters[] = 'scale=iw*sar:ih';
+            $filters[] = "scale='iw':'iw/dar'";
             $filters[] = 'setsar=1:1';
         } elseif ($needsScale) {
             $filters[] = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease";
+        }
+
+        if ($filters !== []) {
+            $filters[] = 'pad=ceil(iw/2)*2:ceil(ih/2)*2';
         }
 
         return implode(',', $filters);
@@ -245,6 +254,7 @@ class ProcessTemporaryVideoUploadJob implements ShouldQueue
             'metadata' => [
                 'extension' => 'mp4',
                 'name' => pathinfo($fileName, PATHINFO_FILENAME),
+                'file_name' => $fileName,
                 'width' => $probe['width'],
                 'height' => $probe['height'],
                 'duration' => $probe['duration'],

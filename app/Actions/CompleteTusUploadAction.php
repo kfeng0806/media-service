@@ -55,7 +55,6 @@ final readonly class CompleteTusUploadAction
                 'extension' => $extension,
                 'name' => pathinfo($fileName, PATHINFO_FILENAME),
                 'file_size' => $uploadSession->metadata['file_size'] ?? 0,
-                'mime_type' => $uploadSession->metadata['mime_type'] ?? null,
             ],
         ]);
 
